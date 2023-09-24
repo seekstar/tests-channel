@@ -81,6 +81,54 @@ TEST(SPSC, RepetitiveSendRecvIntSize128Num1e6) {
 	spsc_repetitive_send_recv(128, 233, 1000000);
 }
 
+class IncrWhenDestruct {
+public:
+	IncrWhenDestruct(const IncrWhenDestruct &rhs) : cnt_(rhs.cnt_) {}
+	IncrWhenDestruct &operator=(const IncrWhenDestruct &rhs) {
+		if (this == &rhs)
+			return *this;
+		this->~IncrWhenDestruct();
+		cnt_ = rhs.cnt_;
+		return *this;
+	}
+	IncrWhenDestruct(IncrWhenDestruct &&rhs) : cnt_(rhs.cnt_) {
+		rhs.cnt_ = nullptr;
+	}
+	IncrWhenDestruct &operator=(IncrWhenDestruct &&rhs) {
+		cnt_ = rhs.cnt_;
+		rhs.cnt_ = nullptr;
+		return *this;
+	}
+	IncrWhenDestruct(std::atomic<size_t> *cnt) : cnt_(cnt) {}
+	~IncrWhenDestruct() {
+		if (cnt_ != nullptr)
+			cnt_->fetch_add(1);
+	}
+private:
+	std::atomic<size_t> *cnt_;
+};
+void sp_memleak(size_t size) {
+	std::atomic<size_t> cnt(0);
+	{
+		auto [sender, receiver] = channel<IncrWhenDestruct>(size);
+		IncrWhenDestruct x(&cnt);
+		std::thread s(
+			repetitive_send<IncrWhenDestruct>, std::move(sender), std::move(x),
+			size
+		);
+		s.join();
+	}
+	ASSERT_EQ(cnt, size + 1);
+}
+
+TEST(SP, MemLeak1) {
+	sp_memleak(1);
+}
+// 2^20 == 1048576
+TEST(SP, MemLeak2pow20) {
+	sp_memleak(2 << 20);
+}
+
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
