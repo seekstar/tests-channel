@@ -81,44 +81,64 @@ TEST(SPSC, RepetitiveSendRecvIntSize128Num1e6) {
 	spsc_repetitive_send_recv(128, 233, 1000000);
 }
 
-class IncrWhenDestruct {
+class CountConstructionDestruction {
 public:
-	IncrWhenDestruct(const IncrWhenDestruct &rhs) : cnt_(rhs.cnt_) {}
-	IncrWhenDestruct &operator=(const IncrWhenDestruct &rhs) {
+	CountConstructionDestruction(
+		const CountConstructionDestruction &rhs
+	) : c_(rhs.c_), d_(rhs.d_) {
+		c_->fetch_add(1);
+	}
+	CountConstructionDestruction &operator=(
+		const CountConstructionDestruction &rhs
+	) {
 		if (this == &rhs)
 			return *this;
-		this->~IncrWhenDestruct();
-		cnt_ = rhs.cnt_;
+		this->~CountConstructionDestruction();
+		c_ = rhs.c_;
+		d_ = rhs.d_;
+		c_->fetch_add(1);
 		return *this;
 	}
-	IncrWhenDestruct(IncrWhenDestruct &&rhs) : cnt_(rhs.cnt_) {
-		rhs.cnt_ = nullptr;
+	CountConstructionDestruction(
+		CountConstructionDestruction &&rhs
+	) : c_(rhs.c_), d_(rhs.d_) {
+		rhs.c_ = nullptr;
+		rhs.d_ = nullptr;
 	}
-	IncrWhenDestruct &operator=(IncrWhenDestruct &&rhs) {
-		cnt_ = rhs.cnt_;
-		rhs.cnt_ = nullptr;
+	CountConstructionDestruction &operator=(
+		CountConstructionDestruction &&rhs
+	) {
+		c_ = rhs.c_;
+		d_ = rhs.d_;
+		rhs.c_ = nullptr;
+		rhs.d_ = nullptr;
 		return *this;
 	}
-	IncrWhenDestruct(std::atomic<size_t> *cnt) : cnt_(cnt) {}
-	~IncrWhenDestruct() {
-		if (cnt_ != nullptr)
-			cnt_->fetch_add(1);
+	CountConstructionDestruction(
+		std::atomic<size_t> *c, std::atomic<size_t> *d
+	) : c_(c), d_(d) {
+		c_->fetch_add(1);
+	}
+	~CountConstructionDestruction() {
+		if (d_ != nullptr)
+			d_->fetch_add(1);
 	}
 private:
-	std::atomic<size_t> *cnt_;
+	std::atomic<size_t> *c_;
+	std::atomic<size_t> *d_;
 };
 void sp_memleak(size_t size) {
-	std::atomic<size_t> cnt(0);
+	std::atomic<size_t> c(0), d(0);
 	{
-		auto [sender, receiver] = channel<IncrWhenDestruct>(size);
-		IncrWhenDestruct x(&cnt);
+		auto [sender, receiver] = channel<CountConstructionDestruction>(size);
+		CountConstructionDestruction x(&c, &d);
 		std::thread s(
-			repetitive_send<IncrWhenDestruct>, std::move(sender), std::move(x),
-			size
+			repetitive_send<CountConstructionDestruction>, std::move(sender),
+			std::move(x), size
 		);
 		s.join();
 	}
-	ASSERT_EQ(cnt, size + 1);
+	ASSERT_EQ(c, d);
 }
 
 TEST(SP, MemLeak1) {
