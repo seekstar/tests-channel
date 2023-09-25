@@ -247,6 +247,116 @@ TEST(SP, MemLeak2pow20) {
 	sp_memleak(2 << 20);
 }
 
+template <typename T>
+void mpsc_repetitive_send_recv(
+	size_t num_senders, size_t msg_per_sender, size_t size, T x
+) {
+	std::vector<std::thread> ss;
+	auto [sender, receiver] = channel<T>(size);
+	for (size_t i = 0; i < num_senders; ++i) {
+		ss.emplace_back(repetitive_send<T>, sender.clone(), x, msg_per_sender);
+	}
+	sender.drop();
+	repetitive_recv(std::move(receiver), x, num_senders * msg_per_sender);
+	for (std::thread &s : ss) {
+		s.join();
+	}
+}
+
+TEST(MPSC, RepetitiveSendRecvIntSender1MsgPerSender1e5Size1) {
+	mpsc_repetitive_send_recv(1, 100000, 1, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender1MsgPerSender1e5Size2) {
+	mpsc_repetitive_send_recv(1, 100000, 2, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender1MsgPerSender1e5Size4) {
+	mpsc_repetitive_send_recv(1, 100000, 4, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender1MsgPerSender1e5Size8) {
+	mpsc_repetitive_send_recv(1, 100000, 8, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender1MsgPerSender1e5Size16) {
+	mpsc_repetitive_send_recv(1, 100000, 16, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender1MsgPerSender1e5Size32) {
+	mpsc_repetitive_send_recv(1, 100000, 32, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender1MsgPerSender1e5Size64) {
+	mpsc_repetitive_send_recv(1, 100000, 64, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender1MsgPerSender1e5Size2pow20) {
+	mpsc_repetitive_send_recv(1, 100000, 1 << 20, 233);
+}
+
+TEST(MPSC, RepetitiveSendRecvIntSender2MsgPerSender1e5Size1) {
+	mpsc_repetitive_send_recv(2, 100000, 1, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender2MsgPerSender1e5Size2) {
+	mpsc_repetitive_send_recv(2, 100000, 2, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender2MsgPerSender1e5Size4) {
+	mpsc_repetitive_send_recv(2, 100000, 4, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender2MsgPerSender1e5Size8) {
+	mpsc_repetitive_send_recv(2, 100000, 8, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender2MsgPerSender1e5Size16) {
+	mpsc_repetitive_send_recv(2, 100000, 16, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender2MsgPerSender1e5Size32) {
+	mpsc_repetitive_send_recv(2, 100000, 32, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender2MsgPerSender1e5Size64) {
+	mpsc_repetitive_send_recv(2, 100000, 64, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender2MsgPerSender1e5Size2pow20) {
+	mpsc_repetitive_send_recv(2, 100000, 1 << 20, 233);
+}
+
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size2) {
+	mpsc_repetitive_send_recv(4, 100000, 2, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size4) {
+	mpsc_repetitive_send_recv(4, 100000, 4, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size8) {
+	mpsc_repetitive_send_recv(4, 100000, 8, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size2pow14) {
+	mpsc_repetitive_send_recv(4, 100000, 1 << 16, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size2pow15) {
+	mpsc_repetitive_send_recv(4, 100000, 1 << 16, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size2pow16) {
+	mpsc_repetitive_send_recv(4, 100000, 1 << 16, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size2pow17) {
+	mpsc_repetitive_send_recv(4, 100000, 1 << 17, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size2pow18) {
+	mpsc_repetitive_send_recv(4, 100000, 1 << 18, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size2pow19) {
+	mpsc_repetitive_send_recv(4, 100000, 1 << 19, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender4MsgPerSender1e5Size2pow20) {
+	mpsc_repetitive_send_recv(4, 100000, 1 << 20, 233);
+}
+
+TEST(MPSC, RepetitiveSendRecvIntSender8MsgPerSender1e5Size2) {
+	mpsc_repetitive_send_recv(8, 100000, 2, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender8MsgPerSender1e5Size4) {
+	mpsc_repetitive_send_recv(8, 100000, 4, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender8MsgPerSender1e5Size8) {
+	mpsc_repetitive_send_recv(8, 100000, 8, 233);
+}
+TEST(MPSC, RepetitiveSendRecvIntSender8MsgPerSender1e5Size2pow20) {
+	mpsc_repetitive_send_recv(8, 100000, 1 << 20, 233);
+}
+
 int main(int argc, char **argv) {
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
