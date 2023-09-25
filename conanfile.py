@@ -13,7 +13,7 @@ class tests_channelRecipe(ConanFile):
     exports_sources = "CMakeLists.txt", "include/*"
 
     def requirements(self):
-        self.requires("mpsc-ring/[>=0.1.0]")
+        self.requires("mpsc-ring/[>=0.1.2]")
 
     def layout(self):
         cmake_layout(self)

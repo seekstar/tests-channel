@@ -5,6 +5,7 @@
 using mpsc_ring::Sender;
 using mpsc_ring::Receiver;
 using mpsc_ring::channel;
+using mpsc_ring::TryRecvError;
 
 template <typename T>
 void repetitive_send(Sender<T> sender, T x, size_t n) {
@@ -70,6 +71,30 @@ TEST(SPSC, RepetitiveSendRecvIntSize64Num1e6) {
 }
 TEST(SPSC, RepetitiveSendRecvIntSize128Num1e6) {
 	spsc_repetitive_send_recv(128, 233, 1000000);
+}
+
+template <typename T>
+void spsc_repetitive_try_recv_send_try_recv(size_t size, T x, size_t n) {
+	auto [sender, receiver] = channel<T>(size);
+	while (n) {
+		n -= 1;
+		ASSERT_EQ(receiver.try_recv().unwrap_err(), TryRecvError::Empty);
+		sender.send(x);
+		ASSERT_EQ(receiver.try_recv().unwrap(), x);
+	}
+	ASSERT_EQ(receiver.try_recv().unwrap_err(), TryRecvError::Empty);
+	sender.drop();
+	ASSERT_EQ(receiver.try_recv().unwrap_err(), TryRecvError::Disconnected);
+}
+
+TEST(SPSC, RepetitiveTryRecvSendTryRecvIntSize1Num1) {
+	spsc_repetitive_try_recv_send_try_recv(1, 233, 1);
+}
+TEST(SPSC, RepetitiveTryRecvSendTryRecvIntSize1Num1e7) {
+	spsc_repetitive_try_recv_send_try_recv(1, 233, 10000000);
+}
+TEST(SPSC, RepetitiveTryRecvSendTryRecvIntSize2pow20Num1e7) {
+	spsc_repetitive_try_recv_send_try_recv(1 << 20, 233, 10000000);
 }
 
 class CountConstructionDestruction {
