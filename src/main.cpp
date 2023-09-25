@@ -97,6 +97,88 @@ TEST(SPSC, RepetitiveTryRecvSendTryRecvIntSize2pow20Num1e7) {
 	spsc_repetitive_try_recv_send_try_recv(1 << 20, 233, 10000000);
 }
 
+template <typename T>
+void sp_sharded_consumers_repetitive_send_recv(
+	size_t num_shards, size_t msg_per_shard, size_t size, T x
+) {
+	std::vector<std::thread> rs;
+	{
+		std::vector<Sender<T>> senders;
+		for (size_t i = 0; i < num_shards; ++i) {
+			auto [sender, receiver] = channel<T>(size);
+			rs.emplace_back(
+				repetitive_recv<T>, std::move(receiver), x, msg_per_shard
+			);
+			senders.emplace_back(std::move(sender));
+		}
+		for (size_t i = 0; i < msg_per_shard; ++i) {
+			for (Sender<T> &sender : senders) {
+				sender.send(x);
+			}
+		}
+	}
+	for (std::thread &r : rs) {
+		r.join();
+	}
+}
+
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard1MsgPerShard1e5Size1) {
+	sp_sharded_consumers_repetitive_send_recv(1, 100000, 1, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard1MsgPerShard1e5Size2) {
+	sp_sharded_consumers_repetitive_send_recv(1, 100000, 2, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard1MsgPerShard1e5Size4) {
+	sp_sharded_consumers_repetitive_send_recv(1, 100000, 4, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard1MsgPerShard1e5Size8) {
+	sp_sharded_consumers_repetitive_send_recv(1, 100000, 8, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard1MsgPerShard1e5Size16) {
+	sp_sharded_consumers_repetitive_send_recv(1, 100000, 16, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard1MsgPerShard1e5Size32) {
+	sp_sharded_consumers_repetitive_send_recv(1, 100000, 32, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard1MsgPerShard1e5Size64) {
+	sp_sharded_consumers_repetitive_send_recv(1, 100000, 64, 233);
+}
+
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard2MsgPerShard1e5Size1) {
+	sp_sharded_consumers_repetitive_send_recv(2, 100000, 1, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard2MsgPerShard1e5Size2) {
+	sp_sharded_consumers_repetitive_send_recv(2, 100000, 2, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard2MsgPerShard1e5Size4) {
+	sp_sharded_consumers_repetitive_send_recv(2, 100000, 4, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard2MsgPerShard1e5Size8) {
+	sp_sharded_consumers_repetitive_send_recv(2, 100000, 8, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard2MsgPerShard1e5Size16) {
+	sp_sharded_consumers_repetitive_send_recv(2, 100000, 16, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard2MsgPerShard1e5Size32) {
+	sp_sharded_consumers_repetitive_send_recv(2, 100000, 32, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard2MsgPerShard1e5Size64) {
+	sp_sharded_consumers_repetitive_send_recv(2, 100000, 64, 233);
+}
+
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard4MsgPerShard1e5Size1) {
+	sp_sharded_consumers_repetitive_send_recv(4, 100000, 1, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard4MsgPerShard1e5Size2) {
+	sp_sharded_consumers_repetitive_send_recv(4, 100000, 2, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard4MsgPerShard1e5Size4) {
+	sp_sharded_consumers_repetitive_send_recv(4, 100000, 4, 233);
+}
+TEST(SPShardedConsumers, RepetitiveSendRecvIntShard4MsgPerShard1e5Size2pow20) {
+	sp_sharded_consumers_repetitive_send_recv(4, 100000, 1 << 20, 233);
+}
+
 class CountConstructionDestruction {
 public:
 	CountConstructionDestruction(
